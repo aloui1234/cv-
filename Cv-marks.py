@@ -1,4 +1,7 @@
 import PyPDF2
+import  re
+import smtplib
+
 
 # Define the criteria and scoring system
 criteria = {
@@ -10,6 +13,9 @@ criteria = {
     'COMPÉTENCES': 2,
     'CONNAISSANCES': 1
 }
+def extract_emails(text):
+    emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)
+    return emails
 
 # Function to calculate the overall mark
 def calculate_mark(text):
@@ -29,7 +35,8 @@ def process_cv(file_path):
         # Extract relevant data from the PDF using PyPDF2 or other PDF library
         cv_data = extract_data_from_pdf(pdf_reader)
         mark = calculate_mark(cv_data)
-        return mark
+        emails = extract_emails(cv_data)
+        return mark , emails
 
 def extract_data_from_pdf(pdf_reader):
     # Implement your code to extract data from the PDF here
@@ -43,13 +50,48 @@ def extract_data_from_pdf(pdf_reader):
 # Function to process a list of CVs and return the marks for all of them
 def process_cv_list(file_paths):
     cv_marks = []
+    cv_emails=[]
     for file_path in file_paths:
-        cv_mark = process_cv(file_path)
+        cv_mark,emails = process_cv(file_path)
         cv_marks.append(cv_mark)
-    return cv_marks
+        cv_emails.append(emails)
+
+    return cv_marks,cv_emails
+
+# Function to send acceptance or rejection emails
+def send_email(result, email):
+    smtp_server = ''
+    smtp_port = 587
+    sender_email = ''
+    sender_password = ''
+
+    if result == 'accept':
+        subject = 'Congratulations! Your CV has been accepted.'
+        body = 'Dear applicant,\n\nCongratulations! We are pleased to inform you that your CV has been accepted.'
+    else:
+        subject = 'Regret: Your CV has not been accepted.'
+        body = 'Dear applicant,\n\nWe regret to inform you that your CV has not been accepted at this time.'
+
+    message = f'Subject: {subject}\n\n{body}'
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, message)
+        print(f"Email sent to {email} successfully.")
+    except Exception as e:
+        print(f"Error sending email to {email}. Error message: {str(e)}")
+
+
 
 # Example usage
-file_paths = ['Cv-recruitment/cv1.pdf', 'Cv-recruitment/cv2.pdf', 'Cv-recruitment/cv3.pdf']
-cv_marks = process_cv_list(file_paths)
-for i, cv_mark in enumerate(cv_marks):
+file_paths = ['Cv-recruitment/hamza.pdf']
+cv_marks,cv_emails = process_cv_list(file_paths)
+for i, (cv_mark,emails) in enumerate(zip(cv_marks,cv_emails)):
     print(f"CV {i+1} Mark: {cv_mark}")
+    print(f"CV {i+1} Emails: {emails}")
+    if cv_mark > 10:
+        send_email('accept', emails[0])
+    else:
+        send_email('reject', emails[0])
+    
