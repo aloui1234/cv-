@@ -7,11 +7,7 @@ criteria = {
     'Education': 3,
     'Experience': 5,
     'Skills': 2,
-
-    'ACADEMIC': 3,
-    'EXPÉRIENCE PROFESSIONNELLE': 5,
-    'COMPÉTENCES': 2,
-    'CONNAISSANCES': 1
+    'ACADEMIC': 3
 }
 
 def extract_emails(text):
@@ -80,7 +76,7 @@ for i, (cv_mark, emails) in enumerate(zip(cv_marks, cv_emails)):
     print(f"CV {i+1} Mark: {cv_mark}")
     print(f"CV {i+1} Emails: {emails}")
     
-    if cv_mark > 10:
+    if cv_mark == 10:
         send_email('accept', emails[0])
     else:
         send_email('reject', emails[0])
